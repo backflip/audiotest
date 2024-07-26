@@ -1,0 +1,17 @@
+{
+  "name": "audioupload",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "node --env-file=.env esbuild.config.js",
+    "start": "serve"
+  },
+  "type": "module",
+  "dependencies": {
+    "@azure/storage-blob": "^12.24.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.23.0",
+    "serve": "^14.2.3"
+  }
+}
