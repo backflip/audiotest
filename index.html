@@ -3,10 +3,19 @@
   <head>
     <title>Test</title>
     <meta charset="UTF-8" />
-    <script src="dist/index.js" type="module"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "./src/config.js": "./dist/config.js",
+          "./src/libs.js": "./dist/libs.js"
+        }
+      }
+    </script>
+    <script src="src/index.js" type="module"></script>
   </head>
 
   <body>
-    <button type="button">Toggle</button>
+    <button data-toggle type="button">Toggle</button>
+    <div data-status aria-live="polite"></div>
   </body>
 </html>

@@ -1,58 +1,98 @@
 // @ts-check
-import { BlobServiceClient } from "@azure/storage-blob";
+import { BlobServiceClient } from "./libs.js";
+import { config } from "./config.js";
 
-const blobServiceClient = new BlobServiceClient(
-  process.env.AZURE_STORAGE_CONNECTION_STRING
-);
-const containerName = `container${new Date().getTime()}`;
-const containerClient = blobServiceClient.getContainerClient(containerName);
+/**
+ * Upload to Azure Blob Storage
+ * @param {Blob} blob
+ * @returns {Promise<void>}
+ */
+const upload = async (blob) => {
+  const fileName = `${new Date().getTime()}.wav`;
+  const blockBlobClient = containerClient.getBlockBlobClient(fileName);
 
-const toggleButton = document.querySelector("button");
-let stream;
+  if (status) {
+    status.innerHTML = `Uploading ${fileName}...`;
+  }
 
-const handleSuccess = function (stream) {
+  await blockBlobClient.uploadData(blob);
+
+  if (status) {
+    status.innerHTML = `Uploaded ${fileName}.`;
+  }
+};
+
+/**
+ * Record audio stream
+ * @param {MediaStream} stream
+ * @returns {Promise<Blob>}
+ */
+const record = (stream) => {
   const options = { mimeType: "audio/webm" };
   const recordedChunks = [];
   const mediaRecorder = new MediaRecorder(stream, options);
 
-  mediaRecorder.addEventListener("dataavailable", function (e) {
-    if (e.data.size > 0) recordedChunks.push(e.data);
+  return new Promise((resolve) => {
+    mediaRecorder.addEventListener("dataavailable", (event) => {
+      if (event.data.size > 0) {
+        recordedChunks.push(event.data);
+      }
+    });
+
+    mediaRecorder.addEventListener("stop", async function () {
+      const blob = new Blob(recordedChunks);
+
+      resolve(blob);
+    });
+
+    mediaRecorder.start();
   });
-
-  mediaRecorder.addEventListener("stop", async function () {
-    const blob = new Blob(recordedChunks);
-
-    console.log({ blob });
-
-    const downloadLink = document.createElement("a");
-    downloadLink.href = URL.createObjectURL(blob);
-    downloadLink.download = "test.wav";
-    downloadLink.innerText = "Download";
-
-    document.body.appendChild(downloadLink);
-
-    const blockBlobClient = containerClient.getBlockBlobClient("test.wav");
-
-    await containerClient.create();
-    await blockBlobClient.uploadData(blob);
-  });
-
-  mediaRecorder.start();
-
-  return stream;
 };
 
-toggleButton?.addEventListener("click", async function () {
-  if (stream) {
-    stream.getTracks().forEach((track) => track.stop());
-    stream = undefined;
+// Init Azure Blob Storage Client
+const blobServiceClient = new BlobServiceClient(config.connectionString);
+const containerClient = blobServiceClient.getContainerClient(
+  config.containerName
+);
+
+// State
+const state = {
+  /** @type {MediaStream | undefined} */
+  stream: undefined,
+  /** @type {Promise<Blob> | undefined} */
+  recorder: undefined,
+};
+
+// Find DOM elements
+const status = document.querySelector("[data-status]");
+const toggleButton = document.querySelector("[data-toggle]");
+
+toggleButton?.addEventListener("click", async () => {
+  if (status) {
+    status.innerHTML = "";
+  }
+
+  if (state.stream) {
+    for (const track of state.stream.getTracks()) {
+      track.stop();
+    }
+
+    const blob = await state.recorder;
+
+    if (blob) {
+      await upload(blob);
+    }
+
+    state.stream = undefined;
+    state.recorder = undefined;
 
     return;
   }
 
-  stream = await navigator.mediaDevices
-    .getUserMedia({ audio: true, video: false })
-    .then(handleSuccess);
-});
+  state.stream = await navigator.mediaDevices.getUserMedia({
+    audio: true,
+    video: false,
+  });
 
-export {};
+  state.recorder = record(state.stream);
+});
