@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Test</title>
+    <meta charset="UTF-8" />
+    <script src="dist/index.js" type="module"></script>
+    <style>
+      [data-toggle] {
+        span {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.25rem;
+        }
+
+        &[aria-pressed="true"] [data-toggle-unpressed],
+        &:not([aria-pressed="true"]) [data-toggle-pressed] {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <button data-toggle type="button">
+      <span data-toggle-unpressed
+        ><img src="assets/mic.svg" alt="" /> Record</span
+      >
+      <span data-toggle-pressed
+        ><img src="assets/mic-off.svg" alt="" /> Stop recording</span
+      >
+    </button>
+    <div data-status aria-live="polite"></div>
+  </body>
+</html>

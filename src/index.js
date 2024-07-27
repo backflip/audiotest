@@ -68,6 +68,11 @@ const status = document.querySelector("[data-status]");
 const toggleButton = document.querySelector("[data-toggle]");
 
 toggleButton?.addEventListener("click", async () => {
+  toggleButton.setAttribute(
+    "aria-pressed",
+    toggleButton.getAttribute("aria-pressed") === "true" ? "false" : "true"
+  );
+
   if (status) {
     status.innerHTML = "";
   }
