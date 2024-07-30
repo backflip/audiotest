@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build": "node --env-file=.env esbuild.config.js",
+    "build": "node esbuild.config.js",
+    "build:local": "node --env-file=.env esbuild.config.js",
     "start": "serve public",
-    "start:https": "serve public --ssl-cert cert/cert.pem --ssl-key cert/key.pem"
+    "start:local": "serve public --ssl-cert cert/cert.pem --ssl-key cert/key.pem"
   },
   "type": "module",
   "dependencies": {
