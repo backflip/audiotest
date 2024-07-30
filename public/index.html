@@ -3,13 +3,26 @@
   <head>
     <title>Test</title>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="dist/index.js" type="module"></script>
     <style>
+      body {
+        font-family: sans-serif;
+      }
+
       [data-toggle] {
+        font: inherit;
+        font-size: 1.5rem;
+        color: inherit;
+
         span {
           display: inline-flex;
           align-items: center;
           gap: 0.25rem;
+        }
+
+        img {
+          width: 1em;
         }
 
         &[aria-pressed="true"] [data-toggle-unpressed],
@@ -29,6 +42,6 @@
         ><img src="assets/mic-off.svg" alt="" /> Stop recording</span
       >
     </button>
-    <div data-status aria-live="polite"></div>
+    <p data-status aria-live="polite"></p>
   </body>
 </html>
