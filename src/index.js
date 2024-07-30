@@ -22,33 +22,6 @@ const upload = async (blob) => {
   }
 };
 
-/**
- * Record audio stream
- * @param {MediaStream} stream
- * @returns {Promise<Blob>}
- */
-const record = (stream) => {
-  const options = { mimeType: "audio/webm" };
-  const recordedChunks = [];
-  const mediaRecorder = new MediaRecorder(stream, options);
-
-  return new Promise((resolve) => {
-    mediaRecorder.addEventListener("dataavailable", (event) => {
-      if (event.data.size > 0) {
-        recordedChunks.push(event.data);
-      }
-    });
-
-    mediaRecorder.addEventListener("stop", async function () {
-      const blob = new Blob(recordedChunks);
-
-      resolve(blob);
-    });
-
-    mediaRecorder.start();
-  });
-};
-
 // Init Azure Blob Storage Client
 const blobServiceClient = new BlobServiceClient(config.connectionString);
 const containerClient = blobServiceClient.getContainerClient(
@@ -57,9 +30,7 @@ const containerClient = blobServiceClient.getContainerClient(
 
 // State
 const state = {
-  /** @type {MediaStream | undefined} */
-  stream: undefined,
-  /** @type {Promise<Blob> | undefined} */
+  /** @type {MediaRecorder| undefined} */
   recorder: undefined,
 };
 
@@ -77,27 +48,40 @@ toggleButton?.addEventListener("click", async () => {
     status.innerHTML = "";
   }
 
-  if (state.stream) {
-    for (const track of state.stream.getTracks()) {
+  if (state.recorder) {
+    state.recorder.stop();
+
+    for (const track of state.recorder.stream.getTracks()) {
       track.stop();
     }
 
-    const blob = await state.recorder;
-
-    if (blob) {
-      await upload(blob);
-    }
-
-    state.stream = undefined;
     state.recorder = undefined;
 
     return;
   }
 
-  state.stream = await navigator.mediaDevices.getUserMedia({
-    audio: true,
-    video: false,
-  });
+  navigator.mediaDevices
+    .getUserMedia({
+      audio: true,
+    })
+    .then((stream) => {
+      const recordedChunks = [];
+      const recorder = new MediaRecorder(stream);
 
-  state.recorder = record(state.stream);
+      recorder.addEventListener("dataavailable", (event) => {
+        if (event.data.size > 0) {
+          recordedChunks.push(event.data);
+        }
+      });
+
+      recorder.addEventListener("stop", async function () {
+        const blob = new Blob(recordedChunks);
+
+        upload(blob);
+      });
+
+      recorder.start();
+
+      state.recorder = recorder;
+    });
 });
